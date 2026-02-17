@@ -1,0 +1,12 @@
+[project]
+name = "eeg-things-paradigm"
+version = "0.1.0"
+description = "EEG Visual Object Recognition Paradigm (360Hz)"
+dependencies = [
+    "psychopy==2024.1.0",
+    "numpy<2.0.0",
+    "pandas",
+    "pyparallel",
+    "pyyaml",
+]
+requires-python = ">=3.10,<3.11"

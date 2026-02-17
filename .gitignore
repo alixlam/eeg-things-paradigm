@@ -1,0 +1,35 @@
+# --- Python / Environment ---
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# --- Experiment Data ---
+# We ignore the 'data' folder to keep behavioral CSVs out of git
+data/
+# We ignore npy master orders as they are subject-specific
+stimuli_orders/
+
+# --- Stimuli ---
+# Large image datasets should NOT be uploaded to Git
+stimuli/training/
+stimuli/test/
+stimuli/target/
+stimuli/
+
+# --- System / IDE ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log
+
+# --- macOS specific ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes

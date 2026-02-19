@@ -3,10 +3,73 @@ name = "eeg-things-paradigm"
 version = "0.1.0"
 description = "EEG Visual Object Recognition Paradigm (360Hz)"
 dependencies = [
-    "psychopy==2024.1.0",
-    "numpy<2.0.0",
     "pandas",
     "pyparallel",
     "pyyaml",
+    "numpy",  # use numpy<1.24 for psychopy<2023.1
+    "scipy",
+    "matplotlib",
+    "pyglet == 1.4.11; platform_system == \"Windows\"",
+    "pyglet == 1.5.27; platform_system != \"Windows\"",
+    "pillow>=9.4.0",
+    "pyqt6",
+    "pandas>=1.5.3",
+    "questplus>=2023.1",
+    "openpyxl",
+    "xmlschema",
+    # for core stimuli
+    "soundfile",
+    "imageio",
+    "imageio-ffmpeg",
+    "psychtoolbox",
+    # for iohub
+    "pywinhook; platform_system == \"Windows\"",
+    "gevent",
+    "psutil",
+    "tables",
+    "pyzmq>=22.2.1",
+    "ujson",
+    "msgpack",
+    "msgpack-numpy",
+    "pyyaml",
+    # for text formatting
+    "freetype-py",
+    "python-bidi",
+    "arabic-reshaper",
+    "javascripthon",
+    "websockets",  # new in 2023.2 for session.py
+    # for the app
+    "wxPython >= 4.1.1",
+    "markdown-it-py",
+    "requests",
+    "future",  # only to support legacy versions in useVersion
+    # supporting plugins
+    "setuptools<=66.1.1",
+    # pavlovia connections
+    "python-gitlab",
+    "gitpython",
+    "cryptography",  # for sshkeys
+    # psychoJS conversions
+    "javascripthon>=0.12",
+    "astunparse",
+    "esprima",
+    "jedi >= 0.16",
+    # hardware
+    "pyserial",
+    "pyparallel; platform_system != \"Darwin\"",
+    # movie backends
+    "ffpyplayer",
+    "opencv-python",
+    # platform specific
+    "python-vlc == 3.0.11115; platform_system == \"Windows\"",
+    "python-vlc >= 3.0.12118; platform_system != \"Windows\"",
+    "pypiwin32; platform_system == \"Windows\"",
+    "pyobjc-core; platform_system == \"Darwin\"",
+    "pyobjc-framework-Quartz < 8.0; platform_system == \"Darwin\"",
+    "pyobjc; platform_system == \"Darwin\"",
+    "python-xlib; platform_system == \"Linux\"",
 ]
 requires-python = ">=3.10,<3.11"
+
+[tool.setuptools]
+py-modules = ["config", "generate_orders", "main"]

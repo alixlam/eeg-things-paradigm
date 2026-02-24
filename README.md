@@ -12,7 +12,7 @@ Python/PsychoPy reimplementation of the RSVP paradigm from:
 
 Participants view rapid serial visual presentation (RSVP) sequences of 20 images and detect a target image (Buzz Lightyear).
 
-![Paradigm (from Xu et al. 2025 [1])](paradigm_figure.png)
+![Paradigm](paradigm_figure.png)[from Xu et al. 2025 [1]]
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

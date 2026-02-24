@@ -21,7 +21,7 @@ TRIG_TARGET          = 255            # Buzz Lightyear catch trial
 
 # ── Display ────────────────────────────────────────────────────────────────────
 BACKGROUND_COLOR     = [0.247, 0.271, 0.298]  # Grey
-STIM_SIZE_PIX        = [400, 400]             # stimulus size in pixels
+STIM_SIZE_PIX        = [500, 500]             # stimulus size in pixels
 PHOTODIODE_SIZE      = 50                     # white square side length in pixels 
 
 # ── Presentation structure ─────────────────────────────────────────────────────

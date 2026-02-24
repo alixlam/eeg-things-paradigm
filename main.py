@@ -15,8 +15,6 @@ Target : 0
 
 Triggers
 --------
-START  = 10   (session start,  EEG recording on)
-STOP   = 40   (session end,    EEG recording off)
 TARGET = 255  (catch trial — Buzz Lightyear)
 Test   : trigger = image index (1..200)
 Train  : trigger = category index (1..827, mod 254 + 1 to fit in a byte)
@@ -357,10 +355,17 @@ def run_task():
         "Your task is to detect BUZZ LIGHTYEAR.\n\n"
         "RIGHT ARROW  →  Buzz is present\n"
         "LEFT ARROW   →  Buzz is absent\n\n"
-        "Be as accurate as possible.\n\n\n"
+        "Be as accurate as possible.\n\n\n\n\n\n\n"
         "Press any key to begin."
     )
     txt_stim.draw()
+    if target_files:
+        target_preview = visual.ImageStim(
+            win, image=target_files[0],
+            size=[win_h * 0.2, win_h * 0.2],   # 20% of screen height
+            pos=[0, -win_h * 0.2]   
+        )
+        target_preview.draw()
     draw_photodiode(False)
     win.flip()
     event.waitKeys()

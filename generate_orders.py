@@ -1,14 +1,14 @@
 """
 generate_orders.py
 Generates randomised stimulus orders for both the TRAIN and TEST runs,
-matching the logic of the original MATLAB scripts.
+matching the logic of the original eeg-things scripts.
 
 Train output : sub-{id}_ses-{ses}_train.npy   shape (20, 56, 15)  dtype int
 Test  output : sub-{id}_ses-{ses}_test.npy    shape (20, 51, 4)   dtype int
 
 Encoding
 --------
-Training stimuli : integer = cat * 10 - 10 + img_num   (matches MATLAB)
+Training stimuli : integer = cat * 10 - 10 + img_num  
                    cat  : 1-indexed category  (1..1654)
                    img  : 1-indexed image within category (1..10)
 Test stimuli     : integer = 1..200  (direct 1-indexed image number)

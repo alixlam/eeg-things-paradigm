@@ -14,19 +14,7 @@ Participants view rapid serial visual presentation (RSVP) sequences of 20 images
 
 ![Paradigm](paradigm_figure.png)[from Xu et al. 2025 [1]]
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        ONE SEQUENCE                             │
-│                                                                 │
-│  750ms          20 × (100ms ON + 100ms OFF)          750ms      │
-│  fixation  ──►  [img][blank][img][blank]...[img]  ──► fixation  │
-│                                                                 │
-│                         then: up to 2s response window          │
-│                         (blink + key press)                     │
-└─────────────────────────────────────────────────────────────────┘
 
-RIGHT ARROW = target present   |   LEFT ARROW = target absent
-```
 
 ### Session structure
 

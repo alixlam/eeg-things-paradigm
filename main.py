@@ -48,6 +48,7 @@ DEBUG mode
 """
 
 from psychopy import visual, core, event, gui, parallel
+from psychopy.hardware import keyboard
 import numpy as np
 import pandas as pd
 import glob
@@ -55,7 +56,9 @@ import re
 import os
 import config as cfg
 import platform
+import time
 
+kb = keyboard.Keyboard(device=-1)
 
 # ── Image lookup ───────────────────────────────────────────────────────────────
 
@@ -114,14 +117,18 @@ def decode_train_stim(val):
     return cat, img_num
 
 
-def get_trigger_code(val, is_test_run):
+def get_trigger_code(val, is_test_run, trig_avail):
     """Return EEG trigger byte for a stimulus integer."""
     if val == 0:
         return cfg.TRIG_TARGET          # 255
     if is_test_run:
-        return int(val)                 # 1..200
-    cat, _ = decode_train_stim(val)
-    return int(cat % 254 + 1)          # compress to 1..254
+        # return int(val)                 # 1..200
+        return int(trig_avail[val % len(trig_avail)])
+    # cat, _ = decode_train_stim(val)
+    cat, img_num = decode_train_stim(val)
+    _trig = trig_avail[:cfg.IMG_PER_CAT]
+    # return int(cat % 254 + 1)          # compress to 1..254
+    return int(_trig[img_num % cfg.IMG_PER_CAT])
 
 
 # ── Trigger helper ─────────────────────────────────────────────────────────────
@@ -131,7 +138,7 @@ def send_trigger(p_port, code):
     if p_port is None or code is None:
         return
     p_port.setData(int(code))
-    core.wait(0.002)
+    core.wait(0.01)
     p_port.setData(0)
 
 
@@ -150,7 +157,6 @@ def save_and_quit(sub_id, ses, run_num, run_label, results, stim_log, p_port, wi
         p_port.setData(0)
     win.close()
     core.quit()
-
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
@@ -244,14 +250,17 @@ def run_task():
     print(f"Monitor: frame_dur={frame_dur*1000:.2f}ms  flip_slack={flip_slack*1000:.2f}ms")
 
     # ── Parallel port ─────────────────────────────────────────────────────────
-    p_port = None
+    # p_port = None
     if not DEBUG:
         try:
-            p_port = parallel.Parallel(cfg.PARALLEL_PORT_ADDR)
+            p_port = parallel.ParallelPort(cfg.PARALLEL_PORT_ADDR)
             p_port.setData(0)
             print("Parallel port ready.")
         except Exception as e:
             print(f"Parallel port unavailable ({e}). Triggers disabled.")
+            
+    # Available triggers for parallel port
+    available_triggers = np.arange(2, 126, 2)
 
     # ── Visual objects ────────────────────────────────────────────────────────
 
@@ -290,7 +299,8 @@ def run_task():
         """Draw fixation + photodiode and flip, optionally at a deadline."""
         draw_fixation()
         draw_photodiode(photodiode_on)
-        return win.flip(deadline) if deadline is not None else win.flip()
+        # return win.flip(deadline) if deadline is not None else win.flip()
+        return
 
     def prepare_image(val, is_test):
         """Load image into img_stim or set up placeholder. Does NOT draw."""
@@ -327,7 +337,7 @@ def run_task():
     exp_win = visual.Window(
         size=[800, 400],
         fullscr=False,
-        screen=0 if cfg.SUBJECT_SCREEN == 1 else 1,                           
+        screen=0, #if cfg.SUBJECT_SCREEN == 1 else 1,                           
         color='black',
         units='pix',
         allowGUI=True,
@@ -338,13 +348,14 @@ def run_task():
             f"EXPERIMENTER\n\n"
             f"Set EEG filename to:\n\n"
             f"  {eeg_filename}\n\n\n"
-            f"Press ENTER key when recording is ready."
+            f"Press SPACE key when recording is ready."
         ),
         color='white', height=24, wrapWidth=700
     )
     exp_txt.draw()
     exp_win.flip()
-    event.waitKeys(keyList=['return'])
+    # event.waitKeys(keyList=['return'])
+    kb.waitKeys(keyList=['space'], waitRelease=False)
     exp_win.close()
 
 
@@ -355,7 +366,7 @@ def run_task():
         "Your task is to detect BUZZ LIGHTYEAR.\n\n"
         "RIGHT ARROW  →  Buzz is present\n"
         "LEFT ARROW   →  Buzz is absent\n\n"
-        "Be as accurate as possible.\n\n\n\n\n\n\n"
+        "Be as accurate as possible.\n\n\n\n\n\n\n\n\n\n"
         "Press any key to begin."
     )
     txt_stim.draw()
@@ -363,12 +374,12 @@ def run_task():
         target_preview = visual.ImageStim(
             win, image=target_files[0],
             size=[win_h * 0.2, win_h * 0.2],   # 20% of screen height
-            pos=[0, -win_h * 0.2]   
+            pos=[0, -win_h * 0.18]   
         )
         target_preview.draw()
     draw_photodiode(False)
     win.flip()
-    event.waitKeys()
+    kb.waitKeys()
 
     # ── Session-start trigger ─────────────────────────────────────────────────
     send_trigger(p_port, cfg.TRIG_START)
@@ -393,30 +404,37 @@ def run_task():
         # ── RSVP image stream ─────────────────────────────────────────────
         # Pre-load first image before entering the timed loop
         img_type  = prepare_image(seq_stims[0], is_test_run)
-        t_seq_start = None
-
+        # t_seq_start = None
+        t_off = None
+        
+        t0 = time.perf_counter()
         for i in range(cfg.IMG_PER_SEQUENCE):
             val       = int(seq_stims[i])
             is_target = val == 0
-            trig_code = get_trigger_code(val, is_test_run)
+            trig_code = get_trigger_code(val, is_test_run, available_triggers)
+            # trig_code = 20
 
             # ── Draw prepared image into back buffer ──────────────────────
             draw_stimulus(img_type, is_target)
             draw_fixation()
             draw_photodiode(on=True)
-
+            
+            # Wait inter trial interval if it is not the first element of the sequence
+            if t_off:
+                core.wait((cfg.SOA - cfg.IMG_DUR) - (core.getTime() - t_off))
+            
             # ── Flip ON ───────────────────────────────────────────────────
             # First image: flip immediately and record sequence start time
             # Subsequent images: flip exactly SOA after previous onset
-            if t_seq_start is None:
-                t_on       = win.flip()
-                t_seq_start = t_on
-            else:
-                t_on = win.flip(t_seq_start + i * cfg.SOA - flip_slack)
+            t_on = win.flip()
+            # if t_seq_start is None:
+            #     t_on       = win.flip()
+            #     t_seq_start = t_on
+            # else:
+            #     t_on = win.flip(t_seq_start + i * cfg.SOA - flip_slack)
 
             # ── Trigger ───────────────────────────────────────────────────
             if p_port:
-                core.wait(cfg.TRIGGER_DELAY)
                 send_trigger(p_port, trig_code)
 
             # ── Pre-load NEXT image during the image-on period ────────────
@@ -425,10 +443,13 @@ def run_task():
                 next_img_type = prepare_image(seq_stims[i + 1], is_test_run)
 
             # ── Wait for IMG_DUR to elapse since t_on ─────────────────────
-            core.wait(cfg.IMG_DUR - (core.getTime() - t_on) - flip_slack)
+            # core.wait(cfg.IMG_DUR - (core.getTime() - t_on) - flip_slack)
+            core.wait(cfg.IMG_DUR - (core.getTime() - t_on))
 
             # ── Flip OFF (blank + fixation, photodiode black) ─────────────
             flip_blank(photodiode_on=False)
+            # Take time lapsed before a new stimulus is presented
+            t_off = win.flip()
 
             # ── Escape check ──────────────────────────────────────────────
             if event.getKeys(keyList=['escape']):
@@ -448,6 +469,7 @@ def run_task():
                 'is_target': int(is_target),
                 'trigger':   trig_code,
                 't_on':      t_on,
+                't_off':     t_off,
             })
 
             # Carry next image type into the next iteration
@@ -463,19 +485,19 @@ def run_task():
 
         # ── Response collection ───────────────────────────────────────────
         resp_clock = core.Clock()
-        keys = event.waitKeys(
+        keys = kb.waitKeys(
             maxWait=cfg.RESP_WIN,
-            keyList=['left', 'right', 'escape'],
-            timeStamped=resp_clock,
+            keyList=['left', 'right', 'escape', '4', 'num_4', '6', 'num_6'],
+            # timeStamped=resp_clock,   
         )
 
-        if keys and keys[0][0] == 'escape':
+        if keys and keys[0].name == 'escape':
             save_and_quit(sub_id, ses, run_num, run_label,
                             results, stim_log, p_port, win)
 
         # RIGHT = target present (1), LEFT = absent (0), no resp = 2
         if keys:
-            response = 1 if keys[0][0] == 'right' else 0
+            response = 1 if keys[0].name in ['right', '6', 'num_6'] else 0
         else:
             response = 2
 
